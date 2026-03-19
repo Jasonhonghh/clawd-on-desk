@@ -47,13 +47,13 @@ A desktop pet that reacts to your [Claude Code](https://docs.anthropic.com/en/do
 
 Drag Clawd to the right screen edge (or right-click → "极简模式") to enter mini mode. Clawd hides behind the screen edge with half-body visible, peeking out when you hover.
 
-| Trigger | Mini Reaction |
-|---|---|
-| Default | Breathing + blinking + occasional arm wobble + eye tracking |
-| Hover | Peek out + wave (slides 25px into screen) |
-| Notification / PermissionRequest | Exclamation mark pop + >< squint eyes |
-| Stop / PostCompact | Flower + ^^ happy eyes + sparkles |
-| Click during peek | Exit mini mode (parabolic jump back) |
+| Trigger | Mini Reaction | |
+|---|---|---|
+| Default | Breathing + blinking + occasional arm wobble + eye tracking | <img src="assets/gif/clawd-mini-idle.gif" width="120"> |
+| Hover | Peek out + wave (slides 25px into screen) | <img src="assets/gif/clawd-mini-peek.gif" width="120"> |
+| Notification / PermissionRequest | Exclamation mark pop + >< squint eyes | <img src="assets/gif/clawd-mini-alert.gif" width="120"> |
+| Stop / PostCompact | Flower + ^^ happy eyes + sparkles | <img src="assets/gif/clawd-mini-happy.gif" width="120"> |
+| Click during peek | Exit mini mode (parabolic jump back) | |
 
 ## Quick Start
 
