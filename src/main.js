@@ -203,6 +203,7 @@ let miniMode = false;
 let miniTransitioning = false;
 let preMiniX = 0, preMiniY = 0;
 let currentMiniX = 0;
+let miniSnap = null;  // { y, width, height } — canonical rect to prevent DPI drift
 let miniTransitionTimer = null;
 let peekAnimTimer = null;
 let isAnimating = false;
@@ -908,6 +909,7 @@ function createWindow() {
     currentMiniX = wa.x + wa.width - Math.round(size.width * (1 - MINI_OFFSET_RATIO));
     startX = currentMiniX;
     startY = Math.max(wa.y, Math.min(prefs.y, wa.y + wa.height - size.height));
+    miniSnap = { y: startY, width: size.width, height: size.height };
     miniMode = true;
   } else if (prefs) {
     const clamped = clampToScreen(prefs.x, prefs.y, size.width, size.height);
@@ -1031,11 +1033,13 @@ function createWindow() {
   screen.on("display-metrics-changed", () => {
     if (!win || win.isDestroyed()) return;
     if (miniMode) {
-      const { y, width, height } = win.getBounds();
-      const wa = getNearestWorkArea(currentMiniX + width / 2, y + height / 2);
-      currentMiniX = wa.x + wa.width - Math.round(width * (1 - MINI_OFFSET_RATIO));
-      const clampedY = Math.max(wa.y, Math.min(y, wa.y + wa.height - height));
-      win.setBounds({ x: currentMiniX, y: clampedY, width, height });
+      const size = SIZES[currentSize];
+      const snapY = miniSnap ? miniSnap.y : win.getBounds().y;
+      const wa = getNearestWorkArea(currentMiniX + size.width / 2, snapY + size.height / 2);
+      currentMiniX = wa.x + wa.width - Math.round(size.width * (1 - MINI_OFFSET_RATIO));
+      const clampedY = Math.max(wa.y, Math.min(snapY, wa.y + wa.height - size.height));
+      miniSnap = { y: clampedY, width: size.width, height: size.height };
+      win.setBounds({ x: currentMiniX, y: clampedY, width: size.width, height: size.height });
       return;
     }
     const { x, y, width, height } = win.getBounds();
@@ -1087,17 +1091,19 @@ function animateWindowX(targetX, durationMs) {
   if (peekAnimTimer) { clearTimeout(peekAnimTimer); peekAnimTimer = null; }
   const bounds = win.getBounds();
   const startX = bounds.x;
-  const size = SIZES[currentSize];
   if (startX === targetX) { isAnimating = false; return; }
   isAnimating = true;
   const startTime = Date.now();
-  const startY = bounds.y;
+  // Use miniSnap to lock y/width/height and prevent DPI drift accumulation
+  const snapY = miniSnap ? miniSnap.y : bounds.y;
+  const snapW = miniSnap ? miniSnap.width : bounds.width;
+  const snapH = miniSnap ? miniSnap.height : bounds.height;
   const step = () => {
     if (!win || win.isDestroyed()) { peekAnimTimer = null; isAnimating = false; return; }
     const t = Math.min(1, (Date.now() - startTime) / durationMs);
     const eased = t * (2 - t);
     const x = Math.round(startX + (targetX - startX) * eased);
-    win.setPosition(x, startY);
+    win.setBounds({ x, y: snapY, width: snapW, height: snapH });
     if (t < 1) {
       peekAnimTimer = setTimeout(step, 16);
     } else {
@@ -1184,6 +1190,7 @@ function enterMiniMode(wa, viaMenu) {
   miniMode = true;
   const size = SIZES[currentSize];
   currentMiniX = wa.x + wa.width - Math.round(size.width * (1 - MINI_OFFSET_RATIO));
+  miniSnap = { y: bounds.y, width: size.width, height: size.height };
 
   if (autoReturnTimer) { clearTimeout(autoReturnTimer); autoReturnTimer = null; }
   if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null; pendingState = null; }
@@ -1205,7 +1212,8 @@ function enterMiniMode(wa, viaMenu) {
       applyState("mini-enter");
       miniTransitionTimer = setTimeout(() => {
         // SVG is loaded, now move to mini position (enter animation already playing)
-        win.setBounds({ x: currentMiniX, y: bounds.y, width: size.width, height: size.height });
+        miniSnap = { y: bounds.y, width: size.width, height: size.height };
+        win.setBounds({ x: currentMiniX, y: miniSnap.y, width: miniSnap.width, height: miniSnap.height });
         miniTransitionTimer = setTimeout(() => {
           miniTransitioning = false;
           applyState("mini-idle");
@@ -1227,6 +1235,7 @@ function exitMiniMode() {
   if (!miniMode) return;
   cancelMiniTransition();
   miniMode = false;
+  miniSnap = null;
   sendToRenderer("mini-mode-change", false);
   buildContextMenu();
   buildTrayMenu();
@@ -1328,6 +1337,7 @@ function resizeWindow(sizeKey) {
     const wa = getNearestWorkArea(currentMiniX + size.width / 2, y + size.height / 2);
     currentMiniX = wa.x + wa.width - Math.round(size.width * (1 - MINI_OFFSET_RATIO));
     const clampedY = Math.max(wa.y, Math.min(y, wa.y + wa.height - size.height));
+    miniSnap = { y: clampedY, width: size.width, height: size.height };
     win.setBounds({ x: currentMiniX, y: clampedY, width: size.width, height: size.height });
   } else {
     const { x, y } = win.getBounds();
