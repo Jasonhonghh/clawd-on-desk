@@ -1,7 +1,9 @@
 "use strict";
 
-const { app, BrowserWindow, screen, Menu, Tray, nativeImage } = require("electron");
+const { app, BrowserWindow, screen, Menu, Tray, nativeImage, Notification } = require("electron");
 const path = require("path");
+
+const provider = require("./provider");
 
 const isMac = process.platform === "darwin";
 const isWin = process.platform === "win32";
@@ -95,6 +97,12 @@ const i18n = {
     sessionMinAgo: "{n}m ago",
     sessionHrAgo: "{n}h ago",
     quit: "Quit",
+    ccConfig: "CC Config",
+    addConfig: "Add...",
+    manageConfig: "Manage...",
+    activeConfig: "(active)",
+    configSwitched: "Config switched to {name}",
+    configSwitchNote: "Restart Claude Code to apply",
   },
   zh: {
     size: "大小",
@@ -137,6 +145,12 @@ const i18n = {
     sessionMinAgo: "{n}分钟前",
     sessionHrAgo: "{n}小时前",
     quit: "退出",
+    ccConfig: "CC 配置",
+    addConfig: "添加...",
+    manageConfig: "管理...",
+    activeConfig: "(当前)",
+    configSwitched: "已切换到 {name}",
+    configSwitchNote: "重启 Claude Code 后生效",
   },
 };
 
@@ -282,6 +296,11 @@ module.exports = function initMenu(ctx) {
     }
     items.push(
       { type: "separator" },
+      {
+        label: t("ccConfig"),
+        submenu: buildCCConfigSubmenu(),
+      },
+      { type: "separator" },
       ctx.getUpdateMenuItem(),
       { type: "separator" },
       {
@@ -300,6 +319,53 @@ module.exports = function initMenu(ctx) {
   function rebuildAllMenus() {
     buildTrayMenu();
     buildContextMenu();
+  }
+
+  // ── CC Config menu builder ──
+  function buildCCConfigSubmenu() {
+    const providersData = provider.providersData;
+    const items = [];
+
+    for (const p of providersData.providers) {
+      items.push({
+        label: p.name + (p.name === providersData.activeProvider ? ` ${t("activeConfig")}` : ""),
+        type: "radio",
+        checked: p.name === providersData.activeProvider,
+        click: () => {
+          const result = provider.switchProvider(p.name);
+          if (result.success) {
+            rebuildAllMenus();
+            new Notification({
+              title: t("configSwitched").replace("{name}", p.name),
+              body: t("configSwitchNote"),
+            }).show();
+          }
+        },
+      });
+    }
+
+    if (items.length > 0) {
+      items.push({ type: "separator" });
+    }
+
+    items.push(
+      {
+        label: t("addConfig"),
+        click: () => {
+          const { openProviderWindow } = require("./provider-window");
+          openProviderWindow(true);
+        },
+      },
+      {
+        label: t("manageConfig"),
+        click: () => {
+          const { openProviderWindow } = require("./provider-window");
+          openProviderWindow(false);
+        },
+      }
+    );
+
+    return items;
   }
 
   function requestAppQuit() {
@@ -390,6 +456,11 @@ module.exports = function initMenu(ctx) {
         label: ctx.getMiniMode() ? t("exitMiniMode") : t("miniMode"),
         enabled: !ctx.getMiniTransitioning() && !(ctx.doNotDisturb && !ctx.getMiniMode()),
         click: () => ctx.getMiniMode() ? ctx.exitMiniMode() : ctx.enterMiniViaMenu(),
+      },
+      { type: "separator" },
+      {
+        label: t("ccConfig"),
+        submenu: buildCCConfigSubmenu(),
       },
       { type: "separator" },
       {
