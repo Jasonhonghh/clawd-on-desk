@@ -400,6 +400,10 @@ const _updaterCtx = {
 const _updater = require("./updater")(_updaterCtx);
 const { setupAutoUpdater, checkForUpdates, getUpdateMenuItem, getUpdateMenuLabel } = _updater;
 
+// ── Provider config — delegated to src/provider-window.js ──
+const _providerWindow = require("./provider-window");
+const { init: initProvider } = _providerWindow;
+
 function createWindow() {
   const prefs = loadPrefs();
   if (prefs && SIZES[prefs.size]) currentSize = prefs.size;
@@ -823,6 +827,9 @@ if (!gotTheLock) {
     permDebugLog = path.join(app.getPath("userData"), "permission-debug.log");
     updateDebugLog = path.join(app.getPath("userData"), "update-debug.log");
     createWindow();
+
+    // Initialize provider config system
+    initProvider();
 
     // Auto-register Claude Code hooks on every launch (dedup-safe)
     syncClawdHooks();

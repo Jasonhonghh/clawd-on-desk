@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CC Config</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      color: #333;
+    }
+
+    .container {
+      display: flex;
+      height: 100vh;
+      background: #f5f7fa;
+    }
+
+    /* Left panel */
+    .left-panel {
+      width: 220px;
+      background: #fff;
+      border-right: 1px solid #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+    }
+
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .panel-header h2 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .provider-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+
+    .provider-item {
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .provider-item:hover { background: #f0f4ff; }
+    .provider-item.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    .provider-item .radio {
+      width: 8px; height: 8px; border-radius: 50%; background: #ccc;
+    }
+    .provider-item.active .radio { background: #fff; }
+    .provider-item .name { flex: 1; font-size: 14px; font-weight: 500; }
+    .provider-item .badge { font-size: 11px; opacity: 0.7; }
+
+    .add-section {
+      padding: 12px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .add-btn {
+      width: 100%;
+      padding: 12px;
+      border: 2px dashed #667eea;
+      border-radius: 10px;
+      background: transparent;
+      color: #667eea;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .add-btn:hover { background: #f0f4ff; border-style: solid; }
+
+    /* Right panel */
+    .right-panel {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .form-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      max-width: 520px;
+      display: none;
+    }
+
+    .form-card.active { display: block; }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    /* Preset templates */
+    .preset-section {
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #e8e8e8;
+    }
+
+    .preset-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+
+    .preset-btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .preset-btn {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      background: #fafafa;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .preset-btn:hover {
+      background: #f0f4ff;
+      border-color: #667eea;
+      color: #667eea;
+    }
+
+    /* JSON Import */
+    .json-import-section {
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #e8e8e8;
+    }
+
+    .json-textarea {
+      width: 100%;
+      min-height: 80px;
+      padding: 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      resize: vertical;
+    }
+
+    .json-textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .json-btn {
+      margin-top: 8px;
+      padding: 8px 16px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .json-btn:hover { background: #5a6fd6; }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      margin: 20px 0 12px 0;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid #e8e8e8;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-danger {
+      background: #ff4757;
+      color: white;
+    }
+
+    .btn-danger:hover { background: #ff3344; }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #555;
+    }
+
+    .btn-secondary:hover { background: #e0e0e0; }
+
+    .footer-note {
+      margin-top: 16px;
+      padding: 10px 14px;
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #856404;
+      text-align: center;
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #999;
+      text-align: center;
+    }
+
+    .empty-state svg {
+      width: 64px; height: 64px;
+      margin-bottom: 16px;
+      opacity: 0.3;
+    }
+
+    .empty-state h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+      color: #666;
+    }
+
+    .empty-state p {
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    .quick-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 400px;
+    }
+
+    .quick-btn {
+      padding: 10px 20px;
+      border: 1px solid #667eea;
+      border-radius: 8px;
+      background: white;
+      color: #667eea;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .quick-btn:hover {
+      background: #667eea;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="left-panel">
+      <div class="panel-header">
+        <h2 id="title">CC Config</h2>
+      </div>
+      <div class="provider-list" id="providerList"></div>
+      <div class="add-section">
+        <button class="add-btn" id="addBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span id="addText">Add New</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="right-panel" id="rightPanel">
+      <!-- Empty State -->
+      <div class="empty-state" id="emptyState">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="12" y1="8" x2="12" y2="16"></line>
+          <line x1="8" y1="12" x2="16" y2="12"></line>
+        </svg>
+        <h3 id="emptyTitle">No Provider Selected</h3>
+        <p id="emptyText">Select a provider or add a new one</p>
+        <div class="quick-actions">
+          <button class="quick-btn" id="quickQianfan">+ 百度千帆</button>
+          <button class="quick-btn" id="quickGLM">+ GLM</button>
+          <button class="quick-btn" id="quickCustom">+ Custom</button>
+        </div>
+      </div>
+
+      <!-- Form Card -->
+      <div class="form-card" id="formCard">
+        <!-- JSON Import -->
+        <div class="json-import-section">
+          <div class="preset-title" id="jsonTitle">Paste JSON Config</div>
+          <textarea class="json-textarea" id="jsonInput" placeholder='Paste env JSON here, e.g. {"ANTHROPIC_AUTH_TOKEN": "xxx", ...}'></textarea>
+          <button class="json-btn" id="jsonBtn">Import from JSON</button>
+        </div>
+
+        <!-- Preset Templates -->
+        <div class="preset-section">
+          <div class="preset-title" id="presetTitle">Quick Templates</div>
+          <div class="preset-btns">
+            <button class="preset-btn" id="templateQianfan">百度千帆</button>
+            <button class="preset-btn" id="templateGLM">GLM</button>
+          </div>
+        </div>
+
+        <!-- Basic Config -->
+        <div class="section-title" id="basicTitle">Basic Configuration</div>
+
+        <div class="form-group">
+          <label id="labelName">Name</label>
+          <input type="text" id="inputName" placeholder="e.g. my-qianfan-config">
+        </div>
+
+        <div class="form-group">
+          <label id="labelToken">Auth Token / API Key</label>
+          <input type="password" id="inputToken" placeholder="e.g. bce-v3/ALTAK... or sk-ant...">
+        </div>
+
+        <div class="form-group">
+          <label id="labelUrl">Base URL</label>
+          <input type="text" id="inputUrl" placeholder="e.g. https://api.anthropic.com">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label id="labelTimeout">Timeout (ms)</label>
+            <input type="number" id="inputTimeout" placeholder="600000">
+          </div>
+          <div class="form-group">
+            <label id="labelModel">Default Model</label>
+            <input type="text" id="inputModel" placeholder="e.g. qianfan-code-latest">
+          </div>
+        </div>
+
+        <!-- Models Config -->
+        <div class="section-title" id="modelsTitle">Model Mapping (Optional)</div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label id="labelHaiku">Haiku / Small</label>
+            <input type="text" id="inputHaiku" placeholder="e.g. qianfan-code-latest">
+          </div>
+          <div class="form-group">
+            <label id="labelSonnet">Sonnet / Medium</label>
+            <input type="text" id="inputSonnet" placeholder="e.g. qianfan-code-latest">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label id="labelOpus">Opus / Large</label>
+          <input type="text" id="inputOpus" placeholder="e.g. glm-5.1">
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" id="saveBtn">Save</button>
+          <button class="btn btn-secondary" id="cancelBtn">Cancel</button>
+          <button class="btn btn-danger" id="deleteBtn">Delete</button>
+        </div>
+
+        <div class="footer-note" id="footerNote">
+          Restart Claude Code to apply changes
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const i18n = {
+      en: {
+        title: "CC Config",
+        add: "Add New",
+        save: "Save",
+        delete: "Delete",
+        cancel: "Cancel",
+        active: "(active)",
+        emptyTitle: "No Provider Selected",
+        emptyText: "Select a provider or create a new one",
+        jsonTitle: "Paste JSON Config",
+        presetTitle: "Quick Templates",
+        basicTitle: "Basic Configuration",
+        modelsTitle: "Model Mapping (Optional)",
+        name: "Name",
+        token: "Auth Token / API Key",
+        url: "Base URL",
+        timeout: "Timeout (ms)",
+        model: "Default Model",
+        haiku: "Haiku / Small",
+        sonnet: "Sonnet / Medium",
+        opus: "Opus / Large",
+        footerNote: "Restart Claude Code to apply changes",
+        confirmDelete: "Are you sure you want to delete this provider?",
+        importError: "Failed to parse JSON",
+        qianfan: "百度千帆",
+        glm: "GLM",
+        custom: "Custom",
+        placeholderJson: 'Paste env JSON here, e.g. {"ANTHROPIC_AUTH_TOKEN": "xxx", ...}',
+      },
+      zh: {
+        title: "CC 配置",
+        add: "添加新配置",
+        save: "保存",
+        delete: "删除",
+        cancel: "取消",
+        active: "(当前)",
+        emptyTitle: "未选择配置",
+        emptyText: "选择一个配置或创建新配置",
+        jsonTitle: "粘贴 JSON 配置",
+        presetTitle: "快速模板",
+        basicTitle: "基础配置",
+        modelsTitle: "模型映射（可选）",
+        name: "名称",
+        token: "认证令牌 / API Key",
+        url: "基础 URL",
+        timeout: "超时时间 (ms)",
+        model: "默认模型",
+        haiku: "Haiku / 轻量",
+        sonnet: "Sonnet / 标准",
+        opus: "Opus / 增强",
+        footerNote: "重启 Claude Code 后生效",
+        confirmDelete: "确定要删除此配置吗？",
+        importError: "JSON 解析失败",
+        qianfan: "百度千帆",
+        glm: "智谱 GLM",
+        custom: "自定义",
+        placeholderJson: '在此处粘贴 env JSON，例如：{"ANTHROPIC_AUTH_TOKEN": "xxx", ...}',
+      }
+    };
+
+    // Preset templates
+    const presets = {
+      qianfan: {
+        name: "qianfan",
+        baseUrl: "https://qianfan.baidubce.com/anthropic/coding",
+        timeout: "600000",
+        model: "qianfan-code-latest",
+        models: {
+          haiku: "qianfan-code-latest",
+          sonnet: "qianfan-code-latest",
+          opus: "qianfan-code-latest"
+        }
+      },
+      glm: {
+        name: "glm",
+        baseUrl: "https://open.bigmodel.cn/api/anthropic",
+        timeout: "3000000",
+        model: "glm-4.5-air",
+        models: {
+          haiku: "glm-4.5-air",
+          sonnet: "glm-5-turbo",
+          opus: "glm-5.1"
+        }
+      }
+    };
+
+    let lang = 'en';
+    let providers = [];
+    let activeProvider = null;
+    let selectedProvider = null;
+    let isNewProvider = false;
+
+    function t(key) {
+      return i18n[lang][key] || key;
+    }
+
+    function updateUI() {
+      document.getElementById('title').textContent = t('title');
+      document.getElementById('addText').textContent = t('add');
+      document.getElementById('emptyTitle').textContent = t('emptyTitle');
+      document.getElementById('emptyText').textContent = t('emptyText');
+      document.getElementById('jsonTitle').textContent = t('jsonTitle');
+      document.getElementById('presetTitle').textContent = t('presetTitle');
+      document.getElementById('basicTitle').textContent = t('basicTitle');
+      document.getElementById('modelsTitle').textContent = t('modelsTitle');
+      document.getElementById('labelName').textContent = t('name');
+      document.getElementById('labelToken').textContent = t('token');
+      document.getElementById('labelUrl').textContent = t('url');
+      document.getElementById('labelTimeout').textContent = t('timeout');
+      document.getElementById('labelModel').textContent = t('model');
+      document.getElementById('labelHaiku').textContent = t('haiku');
+      document.getElementById('labelSonnet').textContent = t('sonnet');
+      document.getElementById('labelOpus').textContent = t('opus');
+      document.getElementById('saveBtn').textContent = t('save');
+      document.getElementById('deleteBtn').textContent = t('delete');
+      document.getElementById('cancelBtn').textContent = t('cancel');
+      document.getElementById('footerNote').textContent = t('footerNote');
+      document.getElementById('jsonInput').placeholder = t('placeholderJson');
+      document.getElementById('templateQianfan').textContent = t('qianfan');
+      document.getElementById('templateGLM').textContent = t('glm');
+      document.getElementById('quickQianfan').textContent = '+ ' + t('qianfan');
+      document.getElementById('quickGLM').textContent = '+ ' + t('glm');
+      document.getElementById('quickCustom').textContent = '+ ' + t('custom');
+
+      renderProviderList();
+    }
+
+    function renderProviderList() {
+      const list = document.getElementById('providerList');
+      list.innerHTML = '';
+
+      providers.forEach(provider => {
+        const item = document.createElement('div');
+        item.className = 'provider-item' + (provider.name === selectedProvider ? ' active' : '');
+        item.innerHTML = `
+          <div class="radio"></div>
+          <div class="name">${escapeHtml(provider.name)}</div>
+          ${provider.name === activeProvider ? `<div class="badge">${t('active')}</div>` : ''}
+        `;
+        item.onclick = () => selectProvider(provider.name);
+        list.appendChild(item);
+      });
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function selectProvider(name) {
+      selectedProvider = name;
+      isNewProvider = false;
+      const provider = providers.find(p => p.name === name);
+
+      if (provider) {
+        showForm();
+        fillForm(provider);
+        document.getElementById('inputName').disabled = true;
+        document.getElementById('deleteBtn').style.display = 'block';
+      }
+
+      renderProviderList();
+    }
+
+    function showForm() {
+      document.getElementById('formCard').classList.add('active');
+      document.getElementById('emptyState').style.display = 'none';
+    }
+
+    function showEmpty() {
+      document.getElementById('formCard').classList.remove('active');
+      document.getElementById('emptyState').style.display = 'flex';
+      selectedProvider = null;
+      isNewProvider = false;
+      renderProviderList();
+    }
+
+    function fillForm(data) {
+      document.getElementById('inputName').value = data.name || '';
+      document.getElementById('inputToken').value = data.authToken || '';
+      document.getElementById('inputUrl').value = data.baseUrl || '';
+      document.getElementById('inputTimeout').value = data.timeout || '';
+      document.getElementById('inputModel').value = data.model || '';
+      document.getElementById('inputHaiku').value = data.models?.haiku || '';
+      document.getElementById('inputSonnet').value = data.models?.sonnet || '';
+      document.getElementById('inputOpus').value = data.models?.opus || '';
+    }
+
+    function getFormData() {
+      const name = document.getElementById('inputName').value.trim();
+      const authToken = document.getElementById('inputToken').value.trim();
+      const baseUrl = document.getElementById('inputUrl').value.trim();
+      const timeout = document.getElementById('inputTimeout').value.trim();
+      const model = document.getElementById('inputModel').value.trim();
+      const haiku = document.getElementById('inputHaiku').value.trim();
+      const sonnet = document.getElementById('inputSonnet').value.trim();
+      const opus = document.getElementById('inputOpus').value.trim();
+
+      if (!name || !authToken) {
+        alert('Name and Auth Token are required');
+        return null;
+      }
+
+      const provider = { name, authToken };
+      if (baseUrl) provider.baseUrl = baseUrl;
+      if (timeout) provider.timeout = timeout;
+      if (model) provider.model = model;
+
+      if (haiku || sonnet || opus) {
+        provider.models = {};
+        if (haiku) provider.models.haiku = haiku;
+        if (sonnet) provider.models.sonnet = sonnet;
+        if (opus) provider.models.opus = opus;
+      }
+
+      return provider;
+    }
+
+    function addNewProvider() {
+      isNewProvider = true;
+      selectedProvider = null;
+      clearForm();
+      showForm();
+      document.getElementById('inputName').disabled = false;
+      document.getElementById('deleteBtn').style.display = 'none';
+      document.getElementById('inputName').focus();
+      renderProviderList();
+    }
+
+    function clearForm() {
+      document.getElementById('inputName').value = '';
+      document.getElementById('inputToken').value = '';
+      document.getElementById('inputUrl').value = '';
+      document.getElementById('inputTimeout').value = '';
+      document.getElementById('inputModel').value = '';
+      document.getElementById('inputHaiku').value = '';
+      document.getElementById('inputSonnet').value = '';
+      document.getElementById('inputOpus').value = '';
+      document.getElementById('jsonInput').value = '';
+    }
+
+    function applyPreset(presetKey) {
+      const preset = presets[presetKey];
+      if (!preset) return;
+
+      document.getElementById('inputUrl').value = preset.baseUrl || '';
+      document.getElementById('inputTimeout').value = preset.timeout || '';
+      document.getElementById('inputModel').value = preset.model || '';
+
+      if (preset.models) {
+        document.getElementById('inputHaiku').value = preset.models.haiku || '';
+        document.getElementById('inputSonnet').value = preset.models.sonnet || '';
+        document.getElementById('inputOpus').value = preset.models.opus || '';
+      }
+
+      // Auto-fill name if empty
+      if (!document.getElementById('inputName').value) {
+        document.getElementById('inputName').value = preset.name;
+      }
+    }
+
+    function importFromJson() {
+      const jsonText = document.getElementById('jsonInput').value.trim();
+      if (!jsonText) return;
+
+      try {
+        const env = JSON.parse(jsonText);
+
+        if (env.ANTHROPIC_AUTH_TOKEN) {
+          document.getElementById('inputToken').value = env.ANTHROPIC_AUTH_TOKEN;
+        }
+        if (env.ANTHROPIC_BASE_URL) {
+          document.getElementById('inputUrl').value = env.ANTHROPIC_BASE_URL;
+        }
+        if (env.ANTHROPIC_MODEL) {
+          document.getElementById('inputModel').value = env.ANTHROPIC_MODEL;
+        }
+        if (env.API_TIMEOUT_MS) {
+          document.getElementById('inputTimeout').value = String(env.API_TIMEOUT_MS);
+        }
+        if (env.ANTHROPIC_DEFAULT_HAIKU_MODEL) {
+          document.getElementById('inputHaiku').value = env.ANTHROPIC_DEFAULT_HAIKU_MODEL;
+        }
+        if (env.ANTHROPIC_DEFAULT_SONNET_MODEL) {
+          document.getElementById('inputSonnet').value = env.ANTHROPIC_DEFAULT_SONNET_MODEL;
+        }
+        if (env.ANTHROPIC_DEFAULT_OPUS_MODEL) {
+          document.getElementById('inputOpus').value = env.ANTHROPIC_DEFAULT_OPUS_MODEL;
+        }
+
+        // Auto-fill name from token prefix if empty
+        if (!document.getElementById('inputName').value) {
+          if (env.ANTHROPIC_BASE_URL?.includes('qianfan')) {
+            document.getElementById('inputName').value = 'qianfan';
+          } else if (env.ANTHROPIC_BASE_URL?.includes('bigmodel')) {
+            document.getElementById('inputName').value = 'glm';
+          }
+        }
+
+        document.getElementById('jsonInput').value = '';
+        alert('JSON imported successfully!');
+      } catch (err) {
+        alert(t('importError') + ': ' + err.message);
+      }
+    }
+
+    async function saveProvider() {
+      const provider = getFormData();
+      if (!provider) return;
+
+      const result = await window.providerAPI.saveProvider(provider);
+      if (result.success) {
+        providers = result.providers;
+        selectedProvider = provider.name;
+        isNewProvider = false;
+        document.getElementById('inputName').disabled = true;
+        document.getElementById('deleteBtn').style.display = 'block';
+        renderProviderList();
+      } else {
+        alert(result.error || 'Failed to save');
+      }
+    }
+
+    async function deleteProvider() {
+      if (!selectedProvider) return;
+      if (!confirm(t('confirmDelete'))) return;
+
+      const result = await window.providerAPI.deleteProvider(selectedProvider);
+      if (result.success) {
+        providers = result.providers;
+        activeProvider = result.activeProvider;
+        showEmpty();
+      } else {
+        alert(result.error || 'Failed to delete');
+      }
+    }
+
+    async function init() {
+      const data = await window.providerAPI.getProviders();
+      providers = data.providers || [];
+      activeProvider = data.activeProvider;
+
+      updateUI();
+
+      // Event listeners
+      document.getElementById('addBtn').onclick = addNewProvider;
+      document.getElementById('quickCustom').onclick = addNewProvider;
+      document.getElementById('saveBtn').onclick = saveProvider;
+      document.getElementById('deleteBtn').onclick = deleteProvider;
+      document.getElementById('cancelBtn').onclick = showEmpty;
+      document.getElementById('jsonBtn').onclick = importFromJson;
+
+      // Preset buttons
+      document.getElementById('templateQianfan').onclick = () => applyPreset('qianfan');
+      document.getElementById('templateGLM').onclick = () => applyPreset('glm');
+      document.getElementById('quickQianfan').onclick = () => {
+        addNewProvider();
+        applyPreset('qianfan');
+      };
+      document.getElementById('quickGLM').onclick = () => {
+        addNewProvider();
+        applyPreset('glm');
+      };
+    }
+
+    init();
+  </script>
+</body>
+</html>
